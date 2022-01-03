@@ -1,165 +1,201 @@
+#!/usr/bin/env python
 """
 @author AchiyaZigi
 OOP - Ex4
-Very simple GUI example for python client to communicates with the server and "play the game!"
+Do NOT change this file - it should be remained "AS IS" - as it communicating with the "server"
 """
-from types import SimpleNamespace
-from client import Client
-import json
-from pygame import gfxdraw
-import pygame
-from pygame import *
+import socket
 
-# init pygame
-WIDTH, HEIGHT = 1080, 720
-
-# default port
-PORT = 6666
-# server host (default localhost 127.0.0.1)
-HOST = '127.0.0.1'
-pygame.init()
-
-screen = display.set_mode((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
-clock = pygame.time.Clock()
-pygame.font.init()
-
-client = Client()
-client.start_connection(HOST, PORT)
-
-pokemons = client.get_pokemons()
-pokemons_obj = json.loads(pokemons, object_hook=lambda d: SimpleNamespace(**d))
-
-print(pokemons)
-
-graph_json = client.get_graph()
-
-FONT = pygame.font.SysFont('Arial', 20, bold=True)
-# load the json string into SimpleNamespace Object
-
-graph = json.loads(
-    graph_json, object_hook=lambda json_dict: SimpleNamespace(**json_dict))
-
-for n in graph.Nodes:
-    x, y, _ = n.pos.split(',')
-    n.pos = SimpleNamespace(x=float(x), y=float(y))
-
- # get data proportions
-min_x = min(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
-min_y = min(list(graph.Nodes), key=lambda n: n.pos.y).pos.y
-max_x = max(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
-max_y = max(list(graph.Nodes), key=lambda n: n.pos.y).pos.y
+MSGLEN = 10000
 
 
-def scale(data, min_screen, max_screen, min_data, max_data):
-    """
-    get the scaled data with proportions min_data, max_data
-    relative to min and max screen dimentions
-    """
-    return ((data - min_data) / (max_data-min_data)) * (max_screen - min_screen) + min_screen
+class Client:
 
+    def start_connection(self, ip, port):
+        """
+        use with ip='127.0.0.1' , port=6666
+        to start a new connection to the game server
+        """
+        self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.soc.connect((ip, port))
 
-# decorate scale with the correct values
+    def __send_message(self, msg):
+        self.soc.send((msg + "\n").encode())
+        return self.soc.recv(MSGLEN).decode().strip()
 
-def my_scale(data, x=False, y=False):
-    if x:
-        return scale(data, 50, screen.get_width() - 50, min_x, max_x)
-    if y:
-        return scale(data, 50, screen.get_height()-50, min_y, max_y)
+    def get_agents(self):
+        """
+        returns: json str of agents. for example:\n
+        {
+            "Agents":[
+                {
+                    "Agent":
+                    {
+                        "id":0,
+                        "value":0.0,
+                        "src":0,
+                        "dest":1,
+                        "speed":1.0,
+                        "pos":"35.18753053591606,32.10378225882353,0.0"
+                    }
+                }
+            ]
+        }
+        """
+        return self.__send_message('getAgents')
 
+    def add_agent(self, json_of_node):
+        """
+        param json_of_node should be in this format: '{"id":0}'
+        (replace 0 with the desired starting node for the agent.)
+        returns 'true' (as str) iff the agent has been added succesfuly
+        """
+        res = self.__send_message("addAgent")
+        if res == "getNode":
+            res = self.__send_message(json_of_node)
+        return res
 
-radius = 15
+    def get_graph(self):
+        """
+        returns the graph as json str. for example:\n
+        {
+            "Edges":[
+                {
+                    "src":0,
+                    "w":1.4004465106761335,
+                    "dest":1
+                },
+                {
+                    "src":0,
+                    "w":1.4620268165085584,
+                    "dest":10
+                }
+            ],
+            "Nodes":[
+                {
+                    "pos":"35.18753053591606,32.10378225882353,0.0",
+                    "id":0
+                },
+                {
+                    "pos":"35.18958953510896,32.10785303529412,0.0",
+                    "id":1
+                },
+                {
+                    "pos":"35.19341035835351,32.10610841680672,0.0",
+                    "id":10
+                }
+            ]
+        }
+        """
+        res = self.__send_message("getGraph")
+        return res
 
-client.add_agent("{\"id\":0}")
-# client.add_agent("{\"id\":1}")
-# client.add_agent("{\"id\":2}")
-# client.add_agent("{\"id\":3}")
+    def get_info(self):
+        """
+        returns the current game info. for example:\n
+        {
+            "GameServer":{
+                "pokemons":1,
+                "is_logged_in":false,
+                "moves":1,
+                "grade":0,
+                "game_level":0,
+                "max_user_level":-1,
+                "id":0,
+                "graph":"data/A0",
+                "agents":1
+            }
+        }
+        """
+        res = self.__send_message("getInfo")
+        return res
 
-# this commnad starts the server - the game is running now
-client.start()
+    def get_pokemons(self):
+        """
+        returns the current pokemons state as json str.\n
+        for pokemon lying on edge (src,dest), then:\n
+        src < dest => type > 0\n
+        dest < src => type < 0\n
+        example:\n
+        {
+            "Pokemons":[
+                {
+                    "Pokemon":{
+                        "value":5.0,
+                        "type":-1,
+                        "pos":"35.197656770719604,32.10191878639921,0.0"
+                    }
+                }
+            ]
+        }
 
-"""
-The code below should be improved significantly:
-The GUI and the "algo" are mixed - refactoring using MVC design pattern is required.
-"""
+        """
+        res = self.__send_message("getPokemons")
+        return res
 
-while client.is_running() == 'true':
-    pokemons = json.loads(client.get_pokemons(),
-                          object_hook=lambda d: SimpleNamespace(**d)).Pokemons
-    pokemons = [p.Pokemon for p in pokemons]
-    for p in pokemons:
-        x, y, _ = p.pos.split(',')
-        p.pos = SimpleNamespace(x=my_scale(
-            float(x), x=True), y=my_scale(float(y), y=True))
-    agents = json.loads(client.get_agents(),
-                        object_hook=lambda d: SimpleNamespace(**d)).Agents
-    agents = [agent.Agent for agent in agents]
-    for a in agents:
-        x, y, _ = a.pos.split(',')
-        a.pos = SimpleNamespace(x=my_scale(
-            float(x), x=True), y=my_scale(float(y), y=True))
-    # check events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit(0)
+    def is_running(self):
+        """
+        returns 'true' (as str) if the game is still running,
+        else: returns 'false' (also str)
+        """
+        res = self.__send_message("isRunning")
+        return res
 
-    # refresh surface
-    screen.fill(Color(0, 0, 0))
+    def time_to_end(self):
+        """
+        returns time to end in mili-seconds str.
+        for example: '29996'
+        """
+        res = self.__send_message("timeToEnd")
+        return res
 
-    # draw nodes
-    for n in graph.Nodes:
-        x = my_scale(n.pos.x, x=True)
-        y = my_scale(n.pos.y, y=True)
+    def start(self):
+        """
+        use start to run the game
+        """
+        res = self.__send_message("startGame")
 
-        # its just to get a nice antialiased circle
-        gfxdraw.filled_circle(screen, int(x), int(y),
-                              radius, Color(64, 80, 174))
-        gfxdraw.aacircle(screen, int(x), int(y),
-                         radius, Color(255, 255, 255))
+    def stop(self):
+        """
+        use stop to end the game and upload results.
+        Note: results will be uploaded only after login and scores > 0.
+        """
+        res = self.__send_message("stopGame")
 
-        # draw the node id
-        id_srf = FONT.render(str(n.id), True, Color(255, 255, 255))
-        rect = id_srf.get_rect(center=(x, y))
-        screen.blit(id_srf, rect)
+    def move(self):
+        """
+        activate all valid choose_next_edge calls.
+        returns: agents state with the same form as get_agents()
+        """
+        res = self.__send_message("move")
+        return res
 
-    # draw edges
-    for e in graph.Edges:
-        # find the edge nodes
-        src = next(n for n in graph.Nodes if n.id == e.src)
-        dest = next(n for n in graph.Nodes if n.id == e.dest)
+    def choose_next_edge(self, next_agent_node_json):
+        """
+        choosing the next destination for a specific agent.
+        param: next_agent_node_json should be in format:\n
+        '{"agent_id":0, "next_node_id":1}'.
+        Note that if\n
+        1. the agent is still moving on some edge, (a.k. agent.dest != -1)
+        or 2. the "next_node_id" isn't an adjacent vertex of agent.src,
+        then move() won't be affected by this invalid "next_node_id" choice.
+        """
+        res = self.__send_message("chooseNextEdge")
+        if res == "getAgentAndNode":
+            res = self.__send_message(next_agent_node_json)
 
-        # scaled positions
-        src_x = my_scale(src.pos.x, x=True)
-        src_y = my_scale(src.pos.y, y=True)
-        dest_x = my_scale(dest.pos.x, x=True)
-        dest_y = my_scale(dest.pos.y, y=True)
+    def log_in(self, id_str):
+        """
+        enter your id as str to login and upload your score to the web server
+        """
+        res = self.__send_message("login")
+        if res == "getId":
+            res = self.__send_message(id_str)
 
-        # draw the line
-        pygame.draw.line(screen, Color(61, 72, 126),
-                         (src_x, src_y), (dest_x, dest_y))
-
-    # draw agents
-    for agent in agents:
-        pygame.draw.circle(screen, Color(122, 61, 23),
-                           (int(agent.pos.x), int(agent.pos.y)), 10)
-    # draw pokemons (note: should differ (GUI wise) between the up and the down pokemons (currently they are marked in the same way).
-    for p in pokemons:
-        pygame.draw.circle(screen, Color(0, 255, 255), (int(p.pos.x), int(p.pos.y)), 10)
-
-    # update screen changes
-    display.update()
-
-    # refresh rate
-    clock.tick(60)
-
-    # choose next edge
-    for agent in agents:
-        if agent.dest == -1:
-            next_node = (agent.src - 1) % len(graph.Nodes)
-            client.choose_next_edge(
-                '{"agent_id":'+str(agent.id)+', "next_node_id":'+str(next_node)+'}')
-            ttl = client.time_to_end()
-            print(ttl, client.get_info())
-
-    client.move()
-# game over:
+    def stop_connection(self):
+        """
+        use it to close the connection 'gracefuly'
+        """
+        res = self.__send_message('.')
+        if res == 'good bye':
+            self.soc.close()
