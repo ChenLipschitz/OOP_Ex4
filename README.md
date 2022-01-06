@@ -1,5 +1,5 @@
 # OOP_Ex4
-![image](https://github.com/ChenLipschitz/OOP_Ex4/blob/main/Pok%C3%A9mon_GO_logo.svg.png)
+![image](https://github.com/ChenLipschitz/OOP_Ex4/blob/main/logo.jpg)
 
 
 This project presents the final assignment for the OOP course (CS.Ariel 2021).
