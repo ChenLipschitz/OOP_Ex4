@@ -19,9 +19,8 @@ class myGame:
         self.client.add_agent("{\"id\":2}")
         self.client.add_agent("{\"id\":3}")
 
-    # def load_json(self):
-    #
-    #
-    # def addAgent(self):
+    def load_json(self):
 
+    def addAgent(self):
 
+    def
