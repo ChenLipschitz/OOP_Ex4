@@ -1,31 +1,58 @@
 """
-@author AchiyaZigi
+part of the code was taken from AchiyaZigi, who wrote the task
 OOP - Ex4
-Very simple GUI example for python client to communicates with the server and "play the game!"
+GUI for python client to communicate with the server and "play the game!"
 """
 from types import SimpleNamespace
 from client import Client
 import json
+import sys
 from pygame import gfxdraw
 import pygame
+import pygame_gui
 from pygame import *
+import time
+from src.GUI.Button import Button
+from src.players.Agent import Agent
+from src.players.Pokémon import Pokémon
+from src.graph.DiGraph import DiGraph
+
 
 # init pygame
-WIDTH, HEIGHT = 1080, 720
+WIDTH, HEIGHT = 800, 600
 
 # default port
 PORT = 6666
 # server host (default localhost 127.0.0.1)
 HOST = '127.0.0.1'
-pygame.init()
 
+pygame.init()
+pygame.display.set_caption("Pokémon Game")
+icon = pygame.image.load('pokeball.png')
+background_image = pygame.image.load('background.jpg')
+pygame.display.set_icon(icon)
 screen = display.set_mode((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
+window = pygame.Surface((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
+# agent image
+agent_image = pygame.image.load('pikachu_agent.png')
+# pokimon image
+pok_up_image = pygame.image.load('pokeball.png')
+pok_down_image = pygame.image.load('pokeball2.png')
+exit_button = Button(x=35, y=20, height=20, width=40, text='Exit')
+agent_mc_button = Button(x=35, y=20+30, height=20, width=40, text='Moves:')
+
 clock = pygame.time.Clock()
 pygame.font.init()
 
 client = Client()
 client.start_connection(HOST, PORT)
 
+timer = time.time()
+timer_font = pygame.font.SysFont('Ariel', 30, bold=True)
+# counts the agent moves
+agent_mc = 0
+player_score_font = pygame.font.SysFont('Ariel', 30, bold=True)
+node_id_font = pygame.font.SysFont('Ariel', 15, bold=False)
 pokemons = client.get_pokemons()
 pokemons_obj = json.loads(pokemons, object_hook=lambda d: SimpleNamespace(**d))
 
@@ -59,13 +86,11 @@ def scale(data, min_screen, max_screen, min_data, max_data):
 
 
 # decorate scale with the correct values
-
 def my_scale(data, x=False, y=False):
     if x:
         return scale(data, 50, screen.get_width() - 50, min_x, max_x)
     if y:
         return scale(data, 50, screen.get_height()-50, min_y, max_y)
-
 
 radius = 15
 
@@ -74,11 +99,10 @@ client.add_agent("{\"id\":0}")
 # client.add_agent("{\"id\":2}")
 # client.add_agent("{\"id\":3}")
 
-# this commnad starts the server - the game is running now
+# this command starts the server - the game is running now
 client.start()
 
 """
-The code below should be improved significantly:
 The GUI and the "algo" are mixed - refactoring using MVC design pattern is required.
 """
 
@@ -102,16 +126,23 @@ while client.is_running() == 'true':
         if event.type == pygame.QUIT:
             pygame.quit()
             exit(0)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if exit_button.onTop(mouse.get_pos()):
+                pygame.quit()
+                exit(0)
 
+    top_left_screen = (0, 0)
     # refresh surface
-    screen.fill(Color(0, 0, 0))
+    screen.blit(background_image, top_left_screen)
+    exit_button.draw(screen)
+    agent_mc_button.draw(screen)
+
 
     # draw nodes
     for n in graph.Nodes:
         x = my_scale(n.pos.x, x=True)
         y = my_scale(n.pos.y, y=True)
-
-        # its just to get a nice antialiased circle
+        # its just to get a nice initialized circle
         gfxdraw.filled_circle(screen, int(x), int(y),
                               radius, Color(64, 80, 174))
         gfxdraw.aacircle(screen, int(x), int(y),
@@ -140,11 +171,18 @@ while client.is_running() == 'true':
 
     # draw agents
     for agent in agents:
-        pygame.draw.circle(screen, Color(122, 61, 23),
-                           (int(agent.pos.x), int(agent.pos.y)), 10)
+        screen.blit(agent_image, (int(agent.pos.x-5), int(agent.pos.y-30)))
+
+    def slop(x1, y1, x2, y2):
+        sl = (y1-y2)/(x1-x2)
+        return sl
+
     # draw pokemons (note: should differ (GUI wise) between the up and the down pokemons (currently they are marked in the same way).
     for p in pokemons:
-        pygame.draw.circle(screen, Color(0, 255, 255), (int(p.pos.x), int(p.pos.y)), 10)
+        x = p.pos.x
+        y = p.pos.y-15
+        screen.blit(pok_up_image, (int(x), int(y)))
+
 
     # update screen changes
     display.update()
