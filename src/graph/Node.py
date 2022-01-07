@@ -22,6 +22,9 @@ class Node:
     def setPos(self, p: tuple) -> None:
         self.pos = p
 
+    def getpos(self)-> tuple:
+        return self.pos
+
     def __repr__(self):
         return f"({self.key} , {self.pos})"
 
