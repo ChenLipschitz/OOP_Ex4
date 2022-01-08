@@ -3,6 +3,7 @@ import pygame
 
 class Button:
     def __init__(self, x, y, width, height, text=''):
+        # color = white
         self.color = (255, 255, 255)
         self.x = x
         self.y = y
@@ -18,21 +19,18 @@ class Button:
         return False
 
     # draws buttons on the screen
-    def draw(self, window, outline=None):
+    def draw(self, window):
         color = self.color
-        tup1 = (self.x, self.y, self.width, self.height)
-        tup2 = (self.x - 2, self.y - 2, self.width + 4, self.height + 4)
-        if not outline:
-            pygame.draw.rect(window, color, tup1, 0)
-        pygame.draw.rect(window, color, tup2, 0)
-        # if it's not an empty text
+        details = (self.x, self.y, self.width, self.height)
+        pygame.draw.rect(window, color, details, 0)
+        # for writing on the button
         if self.text != '':
             font = pygame.font.SysFont('arial', 10)
             tup3 = (0, 0, 0)
             text = font.render(self.text, 1, tup3)
             calc_width = self.width / 2 - text.get_width() / 2
             calc_height = self.height / 2 - text.get_height() / 2
-            # present the window
+            # present the button on screen
             window.blit(text, (self.x + calc_width, self.y + calc_height))
 
 
