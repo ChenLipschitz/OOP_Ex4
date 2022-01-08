@@ -9,10 +9,10 @@ import json
 import sys
 from pygame import gfxdraw
 import pygame
-import pygame_gui
 from pygame import *
 import time
 from src.GUI.Button import Button
+from src.main import main
 from src.players.Agent import Agent
 from src.players.Pokémon import Pokémon
 from src.graph.DiGraph import DiGraph
