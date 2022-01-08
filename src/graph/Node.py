@@ -10,19 +10,31 @@ class Node:
     def setKey(self, k: int) -> None:
         self.key = k
 
+    def getKey(self) -> int:
+        return self.key
+
     def setWeight(self, w: float) -> None:
         self.weight = w
+
+    def getWeight(self, w: float) -> float:
+        return self.weight
 
     def setInfo(self, i: str) -> None:
         self.info = i
 
+    def getInfo(self, i: str) -> str:
+        return self.info
+
     def setTag(self, t: int) -> None:
         self.tag = t
+
+    def getTag(self, t: int) -> int:
+        return self.tag
 
     def setPos(self, p: tuple) -> None:
         self.pos = p
 
-    def getpos(self)-> tuple:
+    def getpos(self) -> tuple:
         return self.pos
 
     def __repr__(self):
@@ -45,3 +57,5 @@ class Node:
 
     def __ge__(self, other):
         return self.weight <= other.weight
+
+

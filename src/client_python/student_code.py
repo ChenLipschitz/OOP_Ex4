@@ -11,6 +11,11 @@ import pygame
 from pygame import *
 
 # init pygame
+from src.graph.DiGraph import DiGraph
+from src.graph.GraphAlgo import GraphAlgo
+from src.main import main
+from src.players.Pokémon import Pokémon
+
 WIDTH, HEIGHT = 1080, 720
 
 # default port
@@ -43,7 +48,7 @@ for n in graph.Nodes:
     x, y, _ = n.pos.split(',')
     n.pos = SimpleNamespace(x=float(x), y=float(y))
 
- # get data proportions
+# get data proportions
 min_x = min(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
 min_y = min(list(graph.Nodes), key=lambda n: n.pos.y).pos.y
 max_x = max(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
@@ -55,7 +60,7 @@ def scale(data, min_screen, max_screen, min_data, max_data):
     get the scaled data with proportions min_data, max_data
     relative to min and max screen dimentions
     """
-    return ((data - min_data) / (max_data-min_data)) * (max_screen - min_screen) + min_screen
+    return ((data - min_data) / (max_data - min_data)) * (max_screen - min_screen) + min_screen
 
 
 # decorate scale with the correct values
@@ -64,15 +69,15 @@ def my_scale(data, x=False, y=False):
     if x:
         return scale(data, 50, screen.get_width() - 50, min_x, max_x)
     if y:
-        return scale(data, 50, screen.get_height()-50, min_y, max_y)
+        return scale(data, 50, screen.get_height() - 50, min_y, max_y)
 
 
 radius = 15
 
 client.add_agent("{\"id\":0}")
-# client.add_agent("{\"id\":1}")
-# client.add_agent("{\"id\":2}")
-# client.add_agent("{\"id\":3}")
+client.add_agent("{\"id\":1}")
+client.add_agent("{\"id\":2}")
+client.add_agent("{\"id\":3}")
 
 # this commnad starts the server - the game is running now
 client.start()
@@ -81,6 +86,38 @@ client.start()
 The code below should be improved significantly:
 The GUI and the "algo" are mixed - refactoring using MVC design pattern is required.
 """
+
+
+def EllocateAgent():
+    for agent in main.ListAgens():
+        if agent.src == agent.lastDest or len(agent.orderList) == 0:
+            v = ("-inf")
+            bestPok = Pokémon(0, (0.0, 0.0, 0.0), 0, 0, 0)
+            pokemons_list = main.ListPokemons()
+            for pok in pokemons_list:
+                if not pok.wasTaken:
+                    srcpok, destpok = main.locaiton_pokemon(pok.pos)
+
+                    agent.lastDest = destpok.id
+                    if agent.src == srcpok.id:
+                        w, lst = main.shortest_path(srcpok, destpok)
+                    elif agent.src == destpok.id:
+                        lst = [srcpok.id, destpok.id]
+                        bestPok = pok
+                        agent.orderList = lst
+                        break
+                    else:
+                        temp_node = DiGraph.getnode(agent.src)
+                        w, lst = main.threeShortestPath(temp_node, srcpok, destpok)
+
+                    lst.pop(0)
+                    if (pok.value - w) > v:
+                        v = pok.value - w
+                        bestPok = pok
+                        agent.orderList = lst
+
+            bestPok.wasTaken = True
+
 
 while client.is_running() == 'true':
     pokemons = json.loads(client.get_pokemons(),
@@ -157,7 +194,7 @@ while client.is_running() == 'true':
         if agent.dest == -1:
             next_node = (agent.src - 1) % len(graph.Nodes)
             client.choose_next_edge(
-                '{"agent_id":'+str(agent.id)+', "next_node_id":'+str(next_node)+'}')
+                '{"agent_id":' + str(agent.id) + ', "next_node_id":' + str(next_node) + '}')
             ttl = client.time_to_end()
             print(ttl, client.get_info())
 

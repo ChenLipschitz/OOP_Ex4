@@ -11,7 +11,7 @@ class Pokémon:
         self.type = type
         # has already been taken
         self.wasTaken = wasTaken
-        self.currnode = node
+        self.srcnode = node
 
     def __str__(self):
         return self.value
