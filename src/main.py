@@ -1,5 +1,5 @@
 import json
-from src.graph import DiGraph
+from src.graph.DiGraph import DiGraph
 from src.graph.Node import Node
 from src.players.Agent import Agent
 from src.players.Pokémon import Pokémon
