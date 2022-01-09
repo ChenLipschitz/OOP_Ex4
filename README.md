@@ -29,4 +29,6 @@ java -jar Ex4_Server_v0.0.jar 2
 
 Notaion: for the example, 2 is the number of the case. There are [0-15] cases.
 
+![image](https://github.com/ChenLipschitz/OOP_Ex4/blob/main/Screenshot%202022-01-09%20145046.png)
+
 ## UML
