@@ -19,6 +19,7 @@ The pokémons are located on the graph’s (directed) edges, therefore, the agen
 * Button - Represents the buttons on the screen
 * Pokémon - Represents the pokémons
 * Agent - Represents the players
+* Main - Represents the main class
 
 ## How To Run:
 Download the project.
