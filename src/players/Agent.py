@@ -1,6 +1,6 @@
 import pygame
 
-
+# represents the agent in the game
 class Agent:
     def __init__(self, ID:int, pos:float, src:int, dest:int, speed:float, value:float):
         self.ID = ID

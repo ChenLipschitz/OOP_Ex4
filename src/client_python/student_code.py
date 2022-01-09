@@ -17,9 +17,8 @@ from src.players.Agent import Agent
 from src.players.Pokémon import Pokémon
 from src.graph.DiGraph import DiGraph
 
-
 # init pygame
-WIDTH, HEIGHT = 1080, 720
+WIDTH, HEIGHT = 800, 600
 
 # default port
 PORT = 6666
@@ -27,43 +26,43 @@ PORT = 6666
 HOST = '127.0.0.1'
 
 pygame.init()
+
+# inits the display window details
 pygame.display.set_caption("Pokémon Game")
 icon = pygame.image.load('pokeball.png')
-background_image = pygame.image.load('background.jpg')
+background_image = pygame.image.load('pixelgame-background11.jpg')
+background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 pygame.display.set_icon(icon)
 screen = display.set_mode((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
-fake_screen = screen.copy()
+temp_screen = screen.copy()
 window = pygame.Surface((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
 # agent image
-agent_image = pygame.image.load('pikachu_agent.png')
-# pokimon image
+agent_image = pygame.image.load('ashKetchum.png')
+# pokemon image
 pok_up_image = pygame.image.load('pokeball.png')
 pok_down_image = pygame.image.load('pokeball2.png')
 exit_button = Button(x=35, y=20, height=20, width=40, text='Exit')
-agent_mc_button = Button(x=35, y=20+30, height=20, width=40, text='Moves:')
+black = (0, 0, 0)
 
 clock = pygame.time.Clock()
-pygame.font.init()
+timer = time.time()
 
 client = Client()
 client.start_connection(HOST, PORT)
 
-timer = time.time()
+# fonts init
+pygame.font.init()
 timer_font = pygame.font.SysFont('Ariel', 30, bold=True)
-# counts the agent moves
-agent_mc = 0
 player_score_font = pygame.font.SysFont('Ariel', 30, bold=True)
 node_id_font = pygame.font.SysFont('Ariel', 15, bold=False)
+
 pokemons = client.get_pokemons()
 pokemons_obj = json.loads(pokemons, object_hook=lambda d: SimpleNamespace(**d))
 
-print(pokemons)
-
 graph_json = client.get_graph()
-
 FONT = pygame.font.SysFont('Arial', 20, bold=True)
-# load the json string into SimpleNamespace Object
 
+# load the json string into SimpleNamespace Object
 graph = json.loads(
     graph_json, object_hook=lambda json_dict: SimpleNamespace(**json_dict))
 
@@ -71,7 +70,7 @@ for n in graph.Nodes:
     x, y, _ = n.pos.split(',')
     n.pos = SimpleNamespace(x=float(x), y=float(y))
 
- # get data proportions
+# get data proportions
 min_x = min(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
 min_y = min(list(graph.Nodes), key=lambda n: n.pos.y).pos.y
 max_x = max(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
@@ -79,11 +78,14 @@ max_y = max(list(graph.Nodes), key=lambda n: n.pos.y).pos.y
 
 
 def scale(data, min_screen, max_screen, min_data, max_data):
+    """
+        get the scaled data with proportions min_data, max_data
+        relative to min and max screen dimentions
+        """
     return ((data - min_data) / (max_data - min_data)) * (max_screen - min_screen) + min_screen
 
 
 # decorate scale with the correct values
-
 def my_scale(data, x=False, y=False):
     if x:
         return scale(data, 50, screen.get_width() - 50, min_x, max_x)
@@ -93,21 +95,18 @@ def my_scale(data, x=False, y=False):
 
 radius = 15
 
+# add agents
 client.add_agent("{\"id\":0}")
 client.add_agent("{\"id\":1}")
 client.add_agent("{\"id\":2}")
 client.add_agent("{\"id\":3}")
 
-# this commnad starts the server - the game is running now
+# this command starts the server - the game is running now
 client.start()
 
-"""
-The code below should be improved significantly:
-The GUI and the "algo" are mixed - refactoring using MVC design pattern is required.
-"""
 
-
-def EllocateAgent():
+# allocates for each pokemon the closest agent
+def AllocateAgent():
     for agent in main.ListAgens():
         if agent.src == agent.lastDest or len(agent.orderList) == 0:
             v = ("-inf")
@@ -115,19 +114,19 @@ def EllocateAgent():
             pokemons_list = main.ListPokemons()
             for pok in pokemons_list:
                 if not pok.wasTaken:
-                    srcpok, destpok = main.locaiton_pokemon(pok.pos)
+                    srcPok, destPok = main.location_pokemon(pok.pos)
 
-                    agent.lastDest = destpok.id
-                    if agent.src == srcpok.id:
-                        w, lst = main.shortest_path(srcpok, destpok)
-                    elif agent.src == destpok.id:
-                        lst = [srcpok.id, destpok.id]
+                    agent.lastDest = destPok.id
+                    if agent.src == srcPok.id:
+                        w, lst = main.shortest_path(srcPok, destPok)
+                    elif agent.src == destPok.id:
+                        lst = [srcPok.id, destPok.id]
                         bestPok = pok
                         agent.orderList = lst
                         break
                     else:
                         temp_node = DiGraph.getnode(agent.src)
-                        w, lst = main.threeShortestPath(temp_node, srcpok, destpok)
+                        w, lst = main.threeShortestPath(temp_node, srcPok, destPok)
 
                     lst.pop(0)
                     if (pok.value - w) > v:
@@ -138,11 +137,37 @@ def EllocateAgent():
             bestPok.wasTaken = True
 
 
+# draw nodes
+def draw_vertices():
+    for n in graph.Nodes:
+        x = my_scale(n.pos.x, x=True)
+        y = my_scale(n.pos.y, y=True)
+        # its just to get a nice initialized circle
+        gfxdraw.filled_circle(screen, int(x), int(y),
+                              radius, Color(64, 80, 174))
+        gfxdraw.aacircle(screen, int(x), int(y),
+                         radius, Color(255, 255, 255))
+
+        # draw the node id
+        id_srf = FONT.render(str(n.id), True, Color(255, 255, 255))
+        rect = id_srf.get_rect(center=(x, y))
+        screen.blit(id_srf, rect)
+
+
 # draw edges
 def draw_edges():
     for e in graph.Edges:
         # find the edge nodes
         src = next(n for n in graph.Nodes if n.id == e.src)
+        dest = next(n for n in graph.Nodes if n.id == e.dest)
+
+        # scaled positions
+        src_x = my_scale(src.pos.x, x=True)
+        src_y = my_scale(src.pos.y, y=True)
+        dest_x = my_scale(dest.pos.x, x=True)
+        dest_y = my_scale(dest.pos.y, y=True)
+
+        # draw the line
         pygame.draw.line(screen, Color(61, 72, 126),
                          (src_x, src_y), (dest_x, dest_y))
 
@@ -154,7 +179,7 @@ def draw_agents():
                                   int(agent.pos.y - 30)))
 
 
-# draw pokemons according to up or down
+# draw pokemons according to their type-> up or down
 def draw_pokemons():
     for p in pokemons:
         x = p.pos.x
@@ -165,26 +190,19 @@ def draw_pokemons():
             screen.blit(pok_up_image, (int(x), int(y)))
 
 
-# check events
+# check events, i.e: if a button is pressed
 def check_events():
     for event in pygame.event.get():
+        # if the player wants to exit the game and pressed the default exit button
         if event.type == pygame.QUIT:
             pygame.quit()
             exit(0)
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            # if the player wants to exit the game and pressed the exit button
             if exit_button.onTop(mouse.get_pos()):
                 pygame.quit()
                 exit(0)
-def draw_vertices():
-    for n in graph.Nodes:
-        x = my_scale(n.pos.x, x=True)
-        y = my_scale(n.pos.y, y=True)
-        # its just to get a nice initialized circle
-        gfxdraw.filled_circle(screen, int(x), int(y),
-                              radius, Color(64, 80, 174))
-        gfxdraw.aacircle(screen, int(x), int(y),
-                         rect=id_srf.get_rect(center=(x, y))
-        screen.blit(id_srf, rect)
+
 
 while client.is_running() == 'true':
     # counts the agent moves
@@ -193,7 +211,8 @@ while client.is_running() == 'true':
     number_of_moves = agent_mc[2].split(':')[1]
     agent_mc_button = Button(x=35, y=20 + 30, height=20, width=80, text=f"Moves: {number_of_moves}")
     timer = time.time()
-    timer_button = Button(x=35, y=20+30+30, height=20, width=80, text="Time To End: "+str(int(float(client.time_to_end()) / 1000)))
+    timer_button = Button(x=35, y=20 + 30 + 30, height=20, width=80,
+                          text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
     pokemons = json.loads(client.get_pokemons(),
                           object_hook=lambda d: SimpleNamespace(**d)).Pokemons
     pokemons = [p.Pokemon for p in pokemons]
@@ -212,9 +231,9 @@ while client.is_running() == 'true':
     check_events()
     top_left_screen = (0, 0)
     # refresh surface
-    fake_screen.fill('black')
-    fake_screen.blit(background_image, (0, 0))
-    screen.blit(pygame.transform.scale(fake_screen, screen.get_rect().size), top_left_screen)
+    temp_screen.fill(black)
+    temp_screen.blit(background_image, (0, 0))
+    screen.blit(pygame.transform.scale(temp_screen, screen.get_rect().size), top_left_screen)
     exit_button.draw(screen)
     agent_mc_button.draw(screen)
     timer_button.draw(screen)
@@ -227,3 +246,8 @@ while client.is_running() == 'true':
 
     # update screen changes
     display.update()
+
+    # refresh rate
+    clock.tick(60)
+
+# done-> Game Over!
