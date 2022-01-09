@@ -11,12 +11,15 @@ class main():
         self.Agens = []
         self.pokemons = []
 
+    # returns the pokemons list
     def ListPokemons(self):
         return self.pokemons
 
+    # return the agents list
     def ListAgens(self):
         return self.Agens
 
+    # loads graph from the json file
     def load_graph(self, file_name: str) -> bool:
         with open(file_name, 'r') as f:
             data = json.load(f)
@@ -30,6 +33,7 @@ class main():
             self.graph.add_edge(dic_edges['src'], dic_edges['dest'], dic_edges['w'])
         return True
 
+    # load agents to the game from the json file
     def load_agents(self, file_name) -> bool:
         try:
             sum_nodes = self.graph.v_size
@@ -38,26 +42,27 @@ class main():
             pos_ag = round(sum_nodes / len(AgentList))
             for ag in AgentList:
                 place = pos_ag
+                # agen represents agent
                 agen = ag['Agent']
-                temppos = agen['pos'].split(",")
-                x = float(temppos[0])
-                y = float(temppos[1])
+                temp_pos = agen['pos'].split(",")
+                x = float(temp_pos[0])
+                y = float(temp_pos[1])
                 z = 0.0
                 pos = (x, y, z)
-                is_alredy_exist = False
-                # for loop hos run al the agents are all redy exzist
+                is_already_exist = False
+                # loop all the agents who are already exist
                 for e in self.Agens:
-                    # if the agent all redy exsit we need to replace is valuse
+                    # if the agent is already exist we need to replace it's value
                     if e.id == agen['id']:
                         e.value = agen['value']
                         e.src = agen['src']
                         e.dest = agen['dest']
                         e.speed = agen['speed']
                         e.pos = self.graph.getnode(sum_nodes / 2).getpos
-                        is_alredy_exist = True
+                        is_already_exist = True
                         break
-                # if the agent not exzist on the kisr add
-                if is_alredy_exist == False:
+                # if the agent doesn't exist on the coordinate, add
+                if not is_already_exist:
                     agent = Agent(agen['id'], agen['value'], agen['src'], agen['dest'], agen['speed'],
                                   self.graph.getnode(place).getpos)
                     self.Agens.append(agent)
@@ -66,6 +71,7 @@ class main():
         except:
             return False
 
+    # load pokemons for the game from the json file
     def load_pokemon(self, file_name):
         try:
             date = json.loads(file_name)
@@ -77,50 +83,51 @@ class main():
                 y = float(tempos[1])
                 z = 0.0
                 pos = (x, y, z)
-                node_pos = self.locaiton_pokemon(pos)
+                node_pos = self.location_pokemon(pos)
                 pokemon = Pokémon(pok['value'], pok['type'], pos, node_pos)
                 self.pokemons.append(pokemon)
             return True
         except:
             return False
 
-    # we create a Straight equation to finde the src node of the pokemon
-    def locaiton_pokemon(self, pos: tuple)-> (Node, Node):
-        # going throw all the nodes on the graph
+    # by using the linear equation we fined the pokemon's src node
+    def location_pokemon(self, pos: tuple) -> (Node, Node):
+        # loop all nodes on the graph
         for n in self.graph.get_list_nodes:
-            # going throw on al the nodes the node is pointed at to create a edge
+            # going through all the nodes the node is pointed at to create a edge
             for e in self.graph.all_out_edges_of_node(n):
                 temp_src = n.getpos
                 temp_dest = e.getpos
                 Incline = (temp_src[1] - temp_dest[1]) / (temp_src[0] - temp_dest[0])
-                virebal = temp_src[1] - (temp_src[0] * Incline)
-                if pos[1] == Incline * pos[0] + virebal:
+                variable = temp_src[1] - (temp_src[0] * Incline)
+                if pos[1] == Incline * pos[0] + variable:
                     # n -> src , e -> dest
-                    return n ,e
+                    return n, e
 
+    # finds the shortest path from one node to another
     def shortest_path(self, id1: int, id2: int) -> (float, list):
         ans = []
-        ansdist = self.shortest_path_dist(id1, id2)
-        if ansdist == -1:
+        ans_dist = self.shortest_path_dist(id1, id2)
+        if ans_dist == -1:
             return None
         if id1 == id2:
-            return (0, [])
+            return 0, []
         self.reset()
         self.Dijkstra(self.graph.getnode(id1), self.graph.getnode(id2))
-        nodesrc = self.graph.getnode(id1)
-        nodedest = self.graph.getnode(id2)
+        node_src = self.graph.getnode(id1)
+        node_dest = self.graph.getnode(id2)
         back = []
-        temp = nodedest
+        temp = node_dest
         while temp.gettag() != -1:
             back.append(temp)
             temp = self.graph.getnode(temp.gettag())
 
-        ans.append(nodesrc.key)
+        ans.append(node_src.key)
 
         for i in range(len(back) - 1, -1, -1):
             ans.append(back[i].key)
         self.reset()
-        return (ansdist, ans)
+        return ans_dist, ans
 
     def shortest_path_dist(self, src: int, dest: int) -> float:
         self.reset()
@@ -137,7 +144,7 @@ class main():
             n.setweight(float('inf'))
 
     def Dijkstra(self, src: Node, dest: Node):
-        mostshort = float('inf')
+        most_short = float('inf')
         queue = []
         src.setWeight(0.0)
         queue.append(src)
@@ -156,7 +163,7 @@ class main():
                             tempno.setweight(temp.getweight() + temped.getweight())
                             tempno.settag(temp.getkey())
                         queue.append(tempno)
-        return mostshort
+        return most_short
 
     def threeShortestPath(self, id1: Node, id2: Node, id3: Node) -> (float, list):
         """

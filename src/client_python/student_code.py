@@ -40,18 +40,20 @@ agent_image = pygame.image.load('ashKetchum.png')
 pok_up_image = pygame.image.load('pokeball.png')
 pok_down_image = pygame.image.load('pokeball2.png')
 exit_button = Button(x=35, y=20, height=20, width=40, text='Exit')
+black = (0, 0, 0)
 
 clock = pygame.time.Clock()
-pygame.font.init()
+timer = time.time()
 
 client = Client()
 client.start_connection(HOST, PORT)
 
-timer = time.time()
+# fonts init
+pygame.font.init()
 timer_font = pygame.font.SysFont('Ariel', 30, bold=True)
-
 player_score_font = pygame.font.SysFont('Ariel', 30, bold=True)
 node_id_font = pygame.font.SysFont('Ariel', 15, bold=False)
+
 pokemons = client.get_pokemons()
 pokemons_obj = json.loads(pokemons, object_hook=lambda d: SimpleNamespace(**d))
 
@@ -91,6 +93,7 @@ def my_scale(data, x=False, y=False):
 
 radius = 15
 
+# add agents
 client.add_agent("{\"id\":0}")
 client.add_agent("{\"id\":1}")
 client.add_agent("{\"id\":2}")
@@ -99,6 +102,8 @@ client.add_agent("{\"id\":3}")
 # this command starts the server - the game is running now
 client.start()
 
+
+# allocates for each pokemon the closest agent
 def AllocateAgent():
     for agent in main.ListAgens():
         if agent.src == agent.lastDest or len(agent.orderList) == 0:
@@ -107,19 +112,19 @@ def AllocateAgent():
             pokemons_list = main.ListPokemons()
             for pok in pokemons_list:
                 if not pok.wasTaken:
-                    srcpok, destpok = main.locaiton_pokemon(pok.pos)
+                    srcPok, destPok = main.location_pokemon(pok.pos)
 
-                    agent.lastDest = destpok.id
-                    if agent.src == srcpok.id:
-                        w, lst = main.shortest_path(srcpok, destpok)
-                    elif agent.src == destpok.id:
-                        lst = [srcpok.id, destpok.id]
+                    agent.lastDest = destPok.id
+                    if agent.src == srcPok.id:
+                        w, lst = main.shortest_path(srcPok, destPok)
+                    elif agent.src == destPok.id:
+                        lst = [srcPok.id, destPok.id]
                         bestPok = pok
                         agent.orderList = lst
                         break
                     else:
                         temp_node = DiGraph.getnode(agent.src)
-                        w, lst = main.threeShortestPath(temp_node, srcpok, destpok)
+                        w, lst = main.threeShortestPath(temp_node, srcPok, destPok)
 
                     lst.pop(0)
                     if (pok.value - w) > v:
@@ -128,6 +133,7 @@ def AllocateAgent():
                         agent.orderList = lst
 
             bestPok.wasTaken = True
+
 
 # draw nodes
 def draw_vertices():
@@ -201,7 +207,7 @@ while client.is_running() == 'true':
     number_of_moves = agent_mc[2].split(':')[1]
     agent_mc_button = Button(x=35, y=20 + 30, height=20, width=80, text=f"Moves: {number_of_moves}")
     timer = time.time()
-    timer_button = Button(x=35, y=20+30+30, height=20, width=80,
+    timer_button = Button(x=35, y=20 + 30 + 30, height=20, width=80,
                           text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
     pokemons = json.loads(client.get_pokemons(),
                           object_hook=lambda d: SimpleNamespace(**d)).Pokemons
@@ -221,7 +227,7 @@ while client.is_running() == 'true':
     check_events()
     top_left_screen = (0, 0)
     # refresh surface
-    temp_screen.fill('black')
+    temp_screen.fill(black)
     temp_screen.blit(background_image, (0, 0))
     screen.blit(pygame.transform.scale(temp_screen, screen.get_rect().size), top_left_screen)
     exit_button.draw(screen)
