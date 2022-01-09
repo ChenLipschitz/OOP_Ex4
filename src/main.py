@@ -74,7 +74,7 @@ class main():
                         e.src = agen['src']
                         e.dest = agen['dest']
                         e.speed = agen['speed']
-                        e.pos = self.graph.getnode(sum_nodes / 2).getpos
+                        e.pos = self.graph.getnode((int)(sum_nodes / 2)).getpos
                         is_already_exist = True
                         break
                 # if the agent doesn't exist on the coordinate, add
@@ -121,10 +121,12 @@ class main():
                 variable = temp_src[1] - (temp_src[0] * Incline)
                 if pos[1] == Incline * pos[0] + variable:
                     # n -> src , e -> dest
-                    return n, e
+                    node = self.graph.getnode(n["id"])
+                    node2 = self.graph.getnode(e)
+                    return node, node2
 
     # finds the shortest path from one node to another
-    def shortest_path(self, id1: int, id2: int) -> (float, list):
+    def shortest_path(self, id1: Node, id2: Node) -> (float, list):
         ans = []
         ans_dist = self.shortest_path_dist(id1, id2)
         if ans_dist == -1:
@@ -137,9 +139,9 @@ class main():
         node_dest = self.graph.getnode(id2)
         back = []
         temp = node_dest
-        while temp.gettag() != -1:
+        while temp.getTag() != -1:
             back.append(temp)
-            temp = self.graph.getnode(temp.gettag())
+            temp = self.graph.getnode(temp.getTag())
 
         ans.append(node_src.key)
 
@@ -160,9 +162,9 @@ class main():
     # resets nodes
     def reset(self):
         for n in self.graph.nodes.values():
-            n.setinfo("White")
-            n.settag(-1)
-            n.setweight(float('inf'))
+            n.setInfo("White")
+            n.setTag(-1)
+            n.setWeight(float('inf'))
 
     # represents the Dijkstra algorithm for finding the shortest paths between nodes in a graph
     def Dijkstra(self, src: Node, dest: Node):
@@ -173,17 +175,17 @@ class main():
         while len(queue) != 0:
             queue.sort()
             temp = queue.pop(0)
-            if temp.getinfo() == "White":
-                temp.setinfo("Black")
-                if temp.getkey() == dest.getKey():
-                    return temp.getweight()
-                for edg in self.graph.all_out_edges_of_node(temp.getkey()):
-                    temped = self.graph.edges[temp.getkey()][edg]
+            if temp.getInfo() == "White":
+                temp.setInfo("Black")
+                if temp.getKey() == dest.getKey():
+                    return temp.getWeight()
+                for edg in self.graph.all_out_edges_of_node(temp.getKey()):
+                    temped = self.graph.edges[temp.getKey()][edg]
                     tempno = self.graph.getnode(edg)
                     if tempno.info == "White":
-                        if temp.getweight() + temped.getweight() < tempno.getweight():
-                            tempno.setweight(temp.getweight() + temped.getweight())
-                            tempno.settag(temp.getkey())
+                        if temp.getWeight() + temped.getweight() < tempno.getWeight():
+                            tempno.setWeight(temp.getWeight() + temped.getweight())
+                            tempno.setTag(temp.getKey())
                         queue.append(tempno)
         return most_short
 

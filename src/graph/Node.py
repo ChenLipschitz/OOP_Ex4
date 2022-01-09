@@ -16,19 +16,19 @@ class Node:
     def setWeight(self, w: float) -> None:
         self.weight = w
 
-    def getWeight(self, w: float) -> float:
+    def getWeight(self) -> float:
         return self.weight
 
     def setInfo(self, i: str) -> None:
         self.info = i
 
-    def getInfo(self, i: str) -> str:
+    def getInfo(self) -> str:
         return self.info
 
     def setTag(self, t: int) -> None:
         self.tag = t
 
-    def getTag(self, t: int) -> int:
+    def getTag(self) -> int:
         return self.tag
 
     def setPos(self, p: tuple) -> None:

@@ -21,3 +21,6 @@ class Edge:
 
     def setTag(self, t: int) -> None:
         self.tag = t
+
+    def getweight(self):
+        return self.weight

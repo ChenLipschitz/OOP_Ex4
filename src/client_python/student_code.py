@@ -18,7 +18,7 @@ from src.players.Pokémon import Pokémon
 from src.graph.DiGraph import DiGraph
 
 # init pygame
-WIDTH, HEIGHT = 1080, 720
+WIDTH, HEIGHT = 800, 600
 
 # default port
 PORT = 6666
@@ -113,18 +113,18 @@ client.start()
 def AllocateAgent():
     for agent in play.ListAgens():
         if agent.src == agent.lestdest or len(agent.orderList) == 0:
-            v = ("-inf")
+            v = -10000000000
             bestPok = Pokémon((0.0, 0.0, 0.0),0, 0, False,0)
             pokemons_list = play.ListPokemons()
             for pok in pokemons_list:
                 if not pok.wasTaken:
                     srcPok, destPok = play.location_pokemon(pok.pos)
 
-                    agent.lestdest = destPok
-                    if agent.src == srcPok["id"]:
+                    agent.lestdest = destPok.getKey()
+                    if agent.src == srcPok.getKey():
                         w, lst = play.shortest_path(srcPok, destPok)
-                    elif agent.src == destPok:
-                        lst = [srcPok.id, destPok]
+                    elif agent.src == destPok.getKey():
+                        lst = [srcPok.getKey(), destPok.getKey()]
                         bestPok = pok
                         agent.orderList = lst
                         break
@@ -230,6 +230,7 @@ def load_agent():
         x = my_scale(float(x), x=True)
         y = my_scale(float(y), y=True)
         a.pos = (x, y, 0.0)
+
 def move_the_agent():
     inf = json.loads(client.get_info(), object_hook=lambda d: SimpleNamespace(**d)).GameServer
     flag = True
@@ -238,8 +239,8 @@ def move_the_agent():
             flag = False
             nextNode = agent.orderList.pop(0)
             print("next: ", nextNode)
-            print("agent: ", agent.id)
-            client.choose_next_edge('{"agent_id":' + str(agent.id) + ', "next_node_id":' + str(nextNode) + '}')
+            print("agent: ", agent.ID)
+            client.choose_next_edge('{"agent_id":' + str(agent.ID) + ', "next_node_id":' + str(nextNode) + '}')
             ttl = client.time_to_end()
             print(ttl, client.get_info())
 
