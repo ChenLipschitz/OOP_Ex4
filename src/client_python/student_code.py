@@ -17,7 +17,6 @@ from src.players.Agent import Agent
 from src.players.Pokémon import Pokémon
 from src.graph.DiGraph import DiGraph
 
-
 # init pygame
 WIDTH, HEIGHT = 1080, 720
 
@@ -40,7 +39,7 @@ agent_image = pygame.image.load('pikachu_agent.png')
 pok_up_image = pygame.image.load('pokeball.png')
 pok_down_image = pygame.image.load('pokeball2.png')
 exit_button = Button(x=35, y=20, height=20, width=40, text='Exit')
-agent_mc_button = Button(x=35, y=20+30, height=20, width=40, text='Moves:')
+agent_mc_button = Button(x=35, y=20 + 30, height=20, width=40, text='Moves:')
 
 clock = pygame.time.Clock()
 pygame.font.init()
@@ -71,7 +70,7 @@ for n in graph.Nodes:
     x, y, _ = n.pos.split(',')
     n.pos = SimpleNamespace(x=float(x), y=float(y))
 
- # get data proportions
+# get data proportions
 min_x = min(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
 min_y = min(list(graph.Nodes), key=lambda n: n.pos.y).pos.y
 max_x = max(list(graph.Nodes), key=lambda n: n.pos.x).pos.x
@@ -107,7 +106,7 @@ The GUI and the "algo" are mixed - refactoring using MVC design pattern is requi
 """
 
 
-def EllocateAgent():
+def AllocateAgent():
     for agent in main.ListAgens():
         if agent.src == agent.lastDest or len(agent.orderList) == 0:
             v = ("-inf")
@@ -143,6 +142,15 @@ def draw_edges():
     for e in graph.Edges:
         # find the edge nodes
         src = next(n for n in graph.Nodes if n.id == e.src)
+        dest = next(n for n in graph.Nodes if n.id == e.dest)
+
+        # scaled positions
+        src_x = my_scale(src.pos.x, x=True)
+        src_y = my_scale(src.pos.y, y=True)
+        dest_x = my_scale(dest.pos.x, x=True)
+        dest_y = my_scale(dest.pos.y, y=True)
+
+        # draw the line
         pygame.draw.line(screen, Color(61, 72, 126),
                          (src_x, src_y), (dest_x, dest_y))
 
@@ -175,6 +183,9 @@ def check_events():
             if exit_button.onTop(mouse.get_pos()):
                 pygame.quit()
                 exit(0)
+
+
+# draw nodes
 def draw_vertices():
     for n in graph.Nodes:
         x = my_scale(n.pos.x, x=True)
@@ -183,8 +194,13 @@ def draw_vertices():
         gfxdraw.filled_circle(screen, int(x), int(y),
                               radius, Color(64, 80, 174))
         gfxdraw.aacircle(screen, int(x), int(y),
-                         rect=id_srf.get_rect(center=(x, y))
+                         radius, Color(255, 255, 255))
+
+        # draw the node id
+        id_srf = FONT.render(str(n.id), True, Color(255, 255, 255))
+        rect = id_srf.get_rect(center=(x, y))
         screen.blit(id_srf, rect)
+
 
 while client.is_running() == 'true':
     # counts the agent moves
@@ -193,7 +209,8 @@ while client.is_running() == 'true':
     number_of_moves = agent_mc[2].split(':')[1]
     agent_mc_button = Button(x=35, y=20 + 30, height=20, width=80, text=f"Moves: {number_of_moves}")
     timer = time.time()
-    timer_button = Button(x=35, y=20+30+30, height=20, width=80, text="Time To End: "+str(int(float(client.time_to_end()) / 1000)))
+    timer_button = Button(x=35, y=20 + 30 + 30, height=20, width=80,
+                          text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
     pokemons = json.loads(client.get_pokemons(),
                           object_hook=lambda d: SimpleNamespace(**d)).Pokemons
     pokemons = [p.Pokemon for p in pokemons]
@@ -227,3 +244,8 @@ while client.is_running() == 'true':
 
     # update screen changes
     display.update()
+
+    # refresh rate
+    clock.tick(60)
+
+# done-> Game Over!
