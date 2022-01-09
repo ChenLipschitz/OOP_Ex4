@@ -18,7 +18,7 @@ from src.players.Pokémon import Pokémon
 from src.graph.DiGraph import DiGraph
 
 # init pygame
-WIDTH, HEIGHT = 1080, 720
+WIDTH, HEIGHT = 800, 600
 
 # default port
 PORT = 6666
@@ -28,18 +28,18 @@ HOST = '127.0.0.1'
 pygame.init()
 pygame.display.set_caption("Pokémon Game")
 icon = pygame.image.load('pokeball.png')
-background_image = pygame.image.load('background.jpg')
+background_image = pygame.image.load('pixelgame-background11.jpg')
+background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 pygame.display.set_icon(icon)
 screen = display.set_mode((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
-fake_screen = screen.copy()
+temp_screen = screen.copy()
 window = pygame.Surface((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
 # agent image
-agent_image = pygame.image.load('pikachu_agent.png')
-# pokimon image
+agent_image = pygame.image.load('ashKetchum.png')
+# pokemon image
 pok_up_image = pygame.image.load('pokeball.png')
 pok_down_image = pygame.image.load('pokeball2.png')
 exit_button = Button(x=35, y=20, height=20, width=40, text='Exit')
-agent_mc_button = Button(x=35, y=20 + 30, height=20, width=40, text='Moves:')
 
 clock = pygame.time.Clock()
 pygame.font.init()
@@ -49,20 +49,16 @@ client.start_connection(HOST, PORT)
 
 timer = time.time()
 timer_font = pygame.font.SysFont('Ariel', 30, bold=True)
-# counts the agent moves
-agent_mc = 0
+
 player_score_font = pygame.font.SysFont('Ariel', 30, bold=True)
 node_id_font = pygame.font.SysFont('Ariel', 15, bold=False)
 pokemons = client.get_pokemons()
 pokemons_obj = json.loads(pokemons, object_hook=lambda d: SimpleNamespace(**d))
 
-print(pokemons)
-
 graph_json = client.get_graph()
-
 FONT = pygame.font.SysFont('Arial', 20, bold=True)
-# load the json string into SimpleNamespace Object
 
+# load the json string into SimpleNamespace Object
 graph = json.loads(
     graph_json, object_hook=lambda json_dict: SimpleNamespace(**json_dict))
 
@@ -78,11 +74,14 @@ max_y = max(list(graph.Nodes), key=lambda n: n.pos.y).pos.y
 
 
 def scale(data, min_screen, max_screen, min_data, max_data):
+    """
+        get the scaled data with proportions min_data, max_data
+        relative to min and max screen dimentions
+        """
     return ((data - min_data) / (max_data - min_data)) * (max_screen - min_screen) + min_screen
 
 
 # decorate scale with the correct values
-
 def my_scale(data, x=False, y=False):
     if x:
         return scale(data, 50, screen.get_width() - 50, min_x, max_x)
@@ -97,14 +96,8 @@ client.add_agent("{\"id\":1}")
 client.add_agent("{\"id\":2}")
 client.add_agent("{\"id\":3}")
 
-# this commnad starts the server - the game is running now
+# this command starts the server - the game is running now
 client.start()
-
-"""
-The code below should be improved significantly:
-The GUI and the "algo" are mixed - refactoring using MVC design pattern is required.
-"""
-
 
 def AllocateAgent():
     for agent in main.ListAgens():
@@ -135,6 +128,22 @@ def AllocateAgent():
                         agent.orderList = lst
 
             bestPok.wasTaken = True
+
+# draw nodes
+def draw_vertices():
+    for n in graph.Nodes:
+        x = my_scale(n.pos.x, x=True)
+        y = my_scale(n.pos.y, y=True)
+        # its just to get a nice initialized circle
+        gfxdraw.filled_circle(screen, int(x), int(y),
+                              radius, Color(64, 80, 174))
+        gfxdraw.aacircle(screen, int(x), int(y),
+                         radius, Color(255, 255, 255))
+
+        # draw the node id
+        id_srf = FONT.render(str(n.id), True, Color(255, 255, 255))
+        rect = id_srf.get_rect(center=(x, y))
+        screen.blit(id_srf, rect)
 
 
 # draw edges
@@ -185,23 +194,6 @@ def check_events():
                 exit(0)
 
 
-# draw nodes
-def draw_vertices():
-    for n in graph.Nodes:
-        x = my_scale(n.pos.x, x=True)
-        y = my_scale(n.pos.y, y=True)
-        # its just to get a nice initialized circle
-        gfxdraw.filled_circle(screen, int(x), int(y),
-                              radius, Color(64, 80, 174))
-        gfxdraw.aacircle(screen, int(x), int(y),
-                         radius, Color(255, 255, 255))
-
-        # draw the node id
-        id_srf = FONT.render(str(n.id), True, Color(255, 255, 255))
-        rect = id_srf.get_rect(center=(x, y))
-        screen.blit(id_srf, rect)
-
-
 while client.is_running() == 'true':
     # counts the agent moves
     # split the getInfo (string) and take the third element (moves)
@@ -209,7 +201,7 @@ while client.is_running() == 'true':
     number_of_moves = agent_mc[2].split(':')[1]
     agent_mc_button = Button(x=35, y=20 + 30, height=20, width=80, text=f"Moves: {number_of_moves}")
     timer = time.time()
-    timer_button = Button(x=35, y=20 + 30 + 30, height=20, width=80,
+    timer_button = Button(x=35, y=20+30+30, height=20, width=80,
                           text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
     pokemons = json.loads(client.get_pokemons(),
                           object_hook=lambda d: SimpleNamespace(**d)).Pokemons
@@ -229,9 +221,9 @@ while client.is_running() == 'true':
     check_events()
     top_left_screen = (0, 0)
     # refresh surface
-    fake_screen.fill('black')
-    fake_screen.blit(background_image, (0, 0))
-    screen.blit(pygame.transform.scale(fake_screen, screen.get_rect().size), top_left_screen)
+    temp_screen.fill('black')
+    temp_screen.blit(background_image, (0, 0))
+    screen.blit(pygame.transform.scale(temp_screen, screen.get_rect().size), top_left_screen)
     exit_button.draw(screen)
     agent_mc_button.draw(screen)
     timer_button.draw(screen)
