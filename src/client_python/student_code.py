@@ -3,6 +3,7 @@ part of the code was taken from AchiyaZigi, who wrote the task
 OOP - Ex4
 GUI for python client to communicate with the server and "play the game!"
 """
+from math import inf
 from types import SimpleNamespace
 from client import Client
 import json
@@ -46,9 +47,10 @@ black = (0, 0, 0)
 
 clock = pygame.time.Clock()
 timer = time.time()
-
 client = Client()
 client.start_connection(HOST, PORT)
+play = main(Client.get_info())
+#graph = play.graph
 
 # fonts init
 pygame.font.init()
@@ -107,26 +109,26 @@ client.start()
 
 # allocates for each pokemon the closest agent
 def AllocateAgent():
-    for agent in main.ListAgens():
+    for agent in play.ListAgens():
         if agent.src == agent.lastDest or len(agent.orderList) == 0:
             v = ("-inf")
-            bestPok = Pokémon(0, (0.0, 0.0, 0.0), 0, 0, 0)
-            pokemons_list = main.ListPokemons()
+            bestPok = Pokémon(0, (0.0, 0.0, 0.0), 0, 0, False,0)
+            pokemons_list = play.ListPokemons()
             for pok in pokemons_list:
                 if not pok.wasTaken:
-                    srcPok, destPok = main.location_pokemon(pok.pos)
+                    srcPok, destPok = play.location_pokemon(pok.pos)
 
                     agent.lastDest = destPok.id
                     if agent.src == srcPok.id:
-                        w, lst = main.shortest_path(srcPok, destPok)
+                        w, lst = play.shortest_path(srcPok, destPok)
                     elif agent.src == destPok.id:
                         lst = [srcPok.id, destPok.id]
                         bestPok = pok
                         agent.orderList = lst
                         break
                     else:
-                        temp_node = DiGraph.getnode(agent.src)
-                        w, lst = main.threeShortestPath(temp_node, srcPok, destPok)
+                        temp_node =play.graph.getnode(agent.src)
+                        w, lst = play.threeShortestPath(temp_node, srcPok, destPok)
 
                     lst.pop(0)
                     if (pok.value - w) > v:
@@ -249,5 +251,21 @@ while client.is_running() == 'true':
 
     # refresh rate
     clock.tick(60)
+
+    AllocateAgent()
+    flag = True
+
+    for agent in play.ListAgens():
+        if agent.dest == -1:
+            flag = False
+            nextNode = agent.orderList.pop(0)
+            print("next: ", nextNode)
+            print("agent: ", agent.id)
+            client.choose_next_edge('{"agent_id":' + str(agent.id) + ', "next_node_id":' + str(nextNode) + '}')
+            ttl = client.time_to_end()
+            print(ttl, client.get_info())
+
+    if number_of_moves / (time.time() - timer) < 10 and flag:
+        client.move()
 
 # done-> Game Over!
