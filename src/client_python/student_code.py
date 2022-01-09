@@ -7,7 +7,6 @@ from math import inf
 from types import SimpleNamespace
 from client import Client
 import json
-import sys
 from pygame import gfxdraw
 import pygame
 from pygame import *
@@ -19,7 +18,7 @@ from src.players.Pokémon import Pokémon
 from src.graph.DiGraph import DiGraph
 
 # init pygame
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1080, 720
 
 # default port
 PORT = 6666
@@ -37,19 +36,21 @@ pygame.display.set_icon(icon)
 screen = display.set_mode((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
 temp_screen = screen.copy()
 window = pygame.Surface((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
+
 # agent image
 agent_image = pygame.image.load('ashKetchum.png')
+
 # pokemon image
 pok_up_image = pygame.image.load('pokeball.png')
 pok_down_image = pygame.image.load('pokeball2.png')
 exit_button = Button(x=35, y=20, height=20, width=40, text='Exit')
-black = (0, 0, 0)
 
 clock = pygame.time.Clock()
 timer = time.time()
 client = Client()
 client.start_connection(HOST, PORT)
-play = main(Client.get_info())
+play = main(client.get_info())
+
 #graph = play.graph
 
 # fonts init
@@ -98,10 +99,11 @@ def my_scale(data, x=False, y=False):
 radius = 15
 
 # add agents
-client.add_agent("{\"id\":0}")
-client.add_agent("{\"id\":1}")
-client.add_agent("{\"id\":2}")
-client.add_agent("{\"id\":3}")
+for i in range(play.numOfAgent):
+    st = "{id:"
+    st += str(i)
+    st += "}"
+    client.add_agent(st)
 
 # this command starts the server - the game is running now
 client.start()
@@ -110,19 +112,19 @@ client.start()
 # allocates for each pokemon the closest agent
 def AllocateAgent():
     for agent in play.ListAgens():
-        if agent.src == agent.lastDest or len(agent.orderList) == 0:
+        if agent.src == agent.lestdest or len(agent.orderList) == 0:
             v = ("-inf")
-            bestPok = Pokémon(0, (0.0, 0.0, 0.0), 0, 0, False,0)
+            bestPok = Pokémon((0.0, 0.0, 0.0),0, 0, False,0)
             pokemons_list = play.ListPokemons()
             for pok in pokemons_list:
                 if not pok.wasTaken:
                     srcPok, destPok = play.location_pokemon(pok.pos)
 
-                    agent.lastDest = destPok.id
-                    if agent.src == srcPok.id:
+                    agent.lestdest = destPok
+                    if agent.src == srcPok["id"]:
                         w, lst = play.shortest_path(srcPok, destPok)
-                    elif agent.src == destPok.id:
-                        lst = [srcPok.id, destPok.id]
+                    elif agent.src == destPok:
+                        lst = [srcPok.id, destPok]
                         bestPok = pok
                         agent.orderList = lst
                         break
@@ -176,20 +178,29 @@ def draw_edges():
 
 # draw agents
 def draw_agents():
-    for agent in agents:
-        screen.blit(agent_image, (int(agent.pos.x - 5),
-                                  int(agent.pos.y - 30)))
+    for agent in play.Agens:
+        image = agent_image
+        rect = image.get_rect()
+        rect.center = (agent.pos[0], agent.pos[1])
+        # agentId = font.render(str(agent.id), True, black)
+        screen.blit(image, rect)
+        # screen.blit(agentId, rect)
 
 
 # draw pokemons according to their type-> up or down
 def draw_pokemons():
-    for p in pokemons:
-        x = p.pos.x
-        y = p.pos.y - 15
-        if p.type == -1:
-            screen.blit(pok_down_image, (int(x), int(y)))
+    for p in play.pokemons:
+        if p.type > 0:
+            image = pok_up_image
         else:
-            screen.blit(pok_up_image, (int(x), int(y)))
+            image = pok_down_image
+        rect = image.get_rect()
+        rect.center = (p.posScale[0], p.posScale[1])
+        screen.blit(image, rect)
+        # update screen changes
+
+
+    display.update()
 
 
 # check events, i.e: if a button is pressed
@@ -205,56 +216,23 @@ def check_events():
                 pygame.quit()
                 exit(0)
 
-
-while client.is_running() == 'true':
-    # counts the agent moves
-    # split the getInfo (string) and take the third element (moves)
-    agent_mc = client.get_info().split(',')
-    number_of_moves = agent_mc[2].split(':')[1]
-    agent_mc_button = Button(x=35, y=20 + 30, height=20, width=80, text=f"Moves: {number_of_moves}")
-    timer = time.time()
-    timer_button = Button(x=35, y=20 + 30 + 30, height=20, width=80,
-                          text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
-    pokemons = json.loads(client.get_pokemons(),
-                          object_hook=lambda d: SimpleNamespace(**d)).Pokemons
-    pokemons = [p.Pokemon for p in pokemons]
-    for p in pokemons:
-        x, y, _ = p.pos.split(',')
-        p.pos = SimpleNamespace(x=my_scale(
-            float(x), x=True), y=my_scale(float(y), y=True))
-    agents = json.loads(client.get_agents(),
-                        object_hook=lambda d: SimpleNamespace(**d)).Agents
-    agents = [agent.Agent for agent in agents]
-    for a in agents:
-        x, y, _ = a.pos.split(',')
-        a.pos = SimpleNamespace(x=my_scale(
-            float(x), x=True), y=my_scale(float(y), y=True))
-
-    check_events()
-    top_left_screen = (0, 0)
-    # refresh surface
-    temp_screen.fill(black)
-    temp_screen.blit(background_image, (0, 0))
-    screen.blit(pygame.transform.scale(temp_screen, screen.get_rect().size), top_left_screen)
-    exit_button.draw(screen)
-    agent_mc_button.draw(screen)
-    timer_button.draw(screen)
-
-    # draw game
-    draw_edges()
-    draw_vertices()
-    draw_agents()
-    draw_pokemons()
-
-    # update screen changes
-    display.update()
-
-    # refresh rate
-    clock.tick(60)
-
-    AllocateAgent()
+def load_pokemons():
+    play.load_pokemon(client.get_pokemons())
+    for p in play.pokemons:
+        x, y, _ = p.pos
+        x = my_scale(float(x), x=True)
+        y = my_scale(float(y), y=True)
+        p.posScale = (x, y, 0.0)
+def load_agent():
+    play.load_agents(client.get_agents())
+    for a in play.Agens:
+        x, y, _ = a.pos
+        x = my_scale(float(x), x=True)
+        y = my_scale(float(y), y=True)
+        a.pos = (x, y, 0.0)
+def move_the_agent():
+    inf = json.loads(client.get_info(), object_hook=lambda d: SimpleNamespace(**d)).GameServer
     flag = True
-
     for agent in play.ListAgens():
         if agent.dest == -1:
             flag = False
@@ -265,7 +243,43 @@ while client.is_running() == 'true':
             ttl = client.time_to_end()
             print(ttl, client.get_info())
 
-    if number_of_moves / (time.time() - timer) < 10 and flag:
+    if inf.moves / (time.time() - timer) < 10 and flag:
         client.move()
 
+while client.is_running() == 'true':
+
+    # counts the agent moves
+    # split the getInfo (string) and take the third element (moves)
+    agent_mc = client.get_info().split(',')
+    number_of_moves = agent_mc[2].split(':')[1]
+    agent_mc_button = Button(x=35, y=20 + 30, height=20, width=80, text=f"Moves: {number_of_moves}")
+    timer = time.time()
+    timer_button = Button(x=35, y=20 + 30 + 30, height=20, width=80,
+                         text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
+    #load agents and pokemons
+    load_pokemons()
+    load_agent()
+    check_events()
+    top_left_screen = (0, 0)
+    # refresh surface
+    temp_screen.fill((0,0,0))
+    temp_screen.blit(background_image, (0, 0))
+    screen.blit(pygame.transform.scale(temp_screen, screen.get_rect().size), top_left_screen)
+    exit_button.draw(screen)
+    agent_mc_button.draw(screen)
+    timer_button.draw(screen)
+    # draw game
+    draw_edges()
+    draw_vertices()
+    draw_agents()
+    draw_pokemons()
+    # update screen changes
+    display.update()
+    # refresh rate
+    clock.tick(60)
+    AllocateAgent()
+    move_the_agent()
+
+
+client.stop_connection()
 # done-> Game Over!

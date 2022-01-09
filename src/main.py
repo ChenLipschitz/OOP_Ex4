@@ -8,7 +8,7 @@ from src.players.Pokémon import Pokémon
 
 
 class main():
-    def __init__(self, json_str) -> None:
+    def __init__(self, json_str:str) -> None:
         self.INFINITY = math.inf
         l = json.loads(json_str)['GameServer']
         self.numOfPokemons = l['pokemons']
@@ -50,10 +50,12 @@ class main():
     # load agents to the game from the json file
     def load_agents(self, file_name) -> bool:
         try:
-            sum_nodes = self.graph.v_size
+            sum_nodes = len(self.graph.get_list_nodes())
             date = json.loads(file_name)
             AgentList = date['Agents']
-            pos_ag = round(sum_nodes / len(AgentList))
+            pos_ag = round(sum_nodes / len(AgentList))-1
+            if pos_ag == sum_nodes-1:
+                pos_ag = pos_ag/2
             for ag in AgentList:
                 place = pos_ag
                 # agen represents agent
@@ -63,7 +65,7 @@ class main():
                 y = float(temp_pos[1])
                 z = 0.0
                 pos = (x, y, z)
-                is_already_exist = False
+                is_already_exist = True
                 # loop all the agents who are already exist
                 for e in self.Agens:
                     # if the agent is already exist we need to replace it's value
@@ -76,8 +78,9 @@ class main():
                         is_already_exist = True
                         break
                 # if the agent doesn't exist on the coordinate, add
-                if not is_already_exist:
-                    agent = Agent(agen['id'], agen['value'], agen['src'], agen['dest'], agen['speed'])
+                if  is_already_exist:
+                    pos = self.graph.getnode(place).getpos()
+                    agent = Agent(agen['id'], agen['value'], agen['src'], agen['dest'], agen['speed'],pos)
 
                     self.Agens.append(agent)
                 place = place + pos_ag
@@ -97,8 +100,8 @@ class main():
                 y = float(tempos[1])
                 z = 0.0
                 pos = (x, y, z)
-                node_pos = self.location_pokemon(pos)
-                pokemon = Pokémon(pok['value'], pok['type'], pos, node_pos)
+                node_src,nodes_dest = self.location_pokemon(pos)
+                pokemon = Pokémon((x,y,z),pok['value'], pok['type'],False, node_src)
                 self.pokemons.append(pokemon)
             return True
         except:
@@ -107,11 +110,13 @@ class main():
     # by using the linear equation we fined the pokemon's src node
     def location_pokemon(self, pos: tuple) -> (Node, Node):
         # loop all nodes on the graph
-        for n in self.graph.get_list_nodes:
+        for n in self.graph.get_list_nodes():
             # going through all the nodes the node is pointed at to create a edge
-            for e in self.graph.all_out_edges_of_node(n):
-                temp_src = n.getpos
-                temp_dest = e.getpos
+            id = n["id"]
+            for e in self.graph.all_out_edges_of_node(id):
+                temp_src = n["pos"]
+                temp = self.graph.getnode(e)
+                temp_dest = temp.getpos()
                 Incline = (temp_src[1] - temp_dest[1]) / (temp_src[0] - temp_dest[0])
                 variable = temp_src[1] - (temp_src[0] * Incline)
                 if pos[1] == Incline * pos[0] + variable:

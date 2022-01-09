@@ -3,8 +3,7 @@ import pygame
 
 # represents the Pokémons in the game
 class Pokémon:
-    def __init__(self, ID:int, pos:tuple, value:float, type:int, wasTaken:bool, node:int):
-        self.ID = ID
+    def __init__(self, pos:tuple, value:float, type:int, wasTaken:bool, node:int):
         self.pos = pos
         self.value = value
         # type -> going upward or downward
