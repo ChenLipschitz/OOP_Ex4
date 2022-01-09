@@ -11,4 +11,3 @@ class Agent:
         self.value = value
         self.whereTo = []
         self.lestdest =0
-
