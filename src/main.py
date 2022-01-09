@@ -1,4 +1,6 @@
 import json
+import math
+
 from src.graph.DiGraph import DiGraph
 from src.graph.Node import Node
 from src.players.Agent import Agent
@@ -6,8 +8,20 @@ from src.players.Pokémon import Pokémon
 
 
 class main():
-    def __init__(self, g: DiGraph = DiGraph()) -> None:
-        self.graph = g
+    def __init__(self, json_str) -> None:
+        self.INFINITY = math.inf
+        l = json.loads(json_str)['GameServer']
+        self.numOfPokemons = l['pokemons']
+        self.is_logged_in = l['is_logged_in']
+        self.moves = l['moves']
+        self.grade = l['grade']
+        self.game_level = l['game_level']
+        self.max_user_level = l['max_user_level']
+        self.id = l['id']
+        self.graph_json = l['graph']
+        self.numOfAgent = l['agents']
+        self.graph = DiGraph()
+        self.load_graph("../" + self.graph_json)
         self.Agens = []
         self.pokemons = []
 
@@ -63,8 +77,8 @@ class main():
                         break
                 # if the agent doesn't exist on the coordinate, add
                 if not is_already_exist:
-                    agent = Agent(agen['id'], agen['value'], agen['src'], agen['dest'], agen['speed'],
-                                  self.graph.getnode(place).getpos)
+                    agent = Agent(agen['id'], agen['value'], agen['src'], agen['dest'], agen['speed'])
+
                     self.Agens.append(agent)
                 place = place + pos_ag
             return True
