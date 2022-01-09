@@ -26,6 +26,8 @@ PORT = 6666
 HOST = '127.0.0.1'
 
 pygame.init()
+
+# inits the display window details
 pygame.display.set_caption("Pokémon Game")
 icon = pygame.image.load('pokeball.png')
 background_image = pygame.image.load('pixelgame-background11.jpg')
@@ -177,7 +179,7 @@ def draw_agents():
                                   int(agent.pos.y - 30)))
 
 
-# draw pokemons according to up or down
+# draw pokemons according to their type-> up or down
 def draw_pokemons():
     for p in pokemons:
         x = p.pos.x
@@ -188,13 +190,15 @@ def draw_pokemons():
             screen.blit(pok_up_image, (int(x), int(y)))
 
 
-# check events
+# check events, i.e: if a button is pressed
 def check_events():
     for event in pygame.event.get():
+        # if the player wants to exit the game and pressed the default exit button
         if event.type == pygame.QUIT:
             pygame.quit()
             exit(0)
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            # if the player wants to exit the game and pressed the exit button
             if exit_button.onTop(mouse.get_pos()):
                 pygame.quit()
                 exit(0)

@@ -3,6 +3,7 @@ from DiGraph import DiGraph
 from GraphAlgo import GraphAlgo
 
 
+# the class is for us, for internal tests
 class DiGraphTest(TestCase):
 
     def test_v_size(self):

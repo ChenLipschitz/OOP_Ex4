@@ -129,6 +129,7 @@ class main():
         self.reset()
         return ans_dist, ans
 
+    # auxiliary method, calculates distance for the shortest_path method
     def shortest_path_dist(self, src: int, dest: int) -> float:
         self.reset()
         ans = self.Dijkstra(self.graph.get_all_v().get(src), self.graph.get_all_v().get(dest))
@@ -137,12 +138,14 @@ class main():
             return -1
         return ans
 
+    # resets nodes
     def reset(self):
         for n in self.graph.nodes.values():
             n.setinfo("White")
             n.settag(-1)
             n.setweight(float('inf'))
 
+    # represents the Dijkstra algorithm for finding the shortest paths between nodes in a graph
     def Dijkstra(self, src: Node, dest: Node):
         most_short = float('inf')
         queue = []
@@ -179,4 +182,4 @@ class main():
             ans.extend(ans1)
             return w, ans
         else:
-            return "node not exist"
+            return "the node does not exist"
