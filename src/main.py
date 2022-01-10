@@ -50,14 +50,14 @@ class main():
     # load agents to the game from the json file
     def load_agents(self, file_name) -> bool:
         try:
-            sum_nodes = len(self.graph.get_list_nodes())
+            # sum_nodes = len(self.graph.get_list_nodes())
             date = json.loads(file_name)
             AgentList = date['Agents']
-            pos_ag = round(sum_nodes / len(AgentList))-1
-            if pos_ag == sum_nodes-1:
-                pos_ag = pos_ag/2
+            # pos_ag = round(sum_nodes / len(AgentList))-1
+            # if pos_ag == sum_nodes-1:
+            #     pos_ag = pos_ag/2
             for ag in AgentList:
-                place = pos_ag
+                # place = pos_ag
                 # agen represents agent
                 agen = ag['Agent']
                 temp_pos = agen['pos'].split(",")
@@ -74,16 +74,15 @@ class main():
                         e.src = agen['src']
                         e.dest = agen['dest']
                         e.speed = agen['speed']
-                        e.pos = self.graph.getnode((int)(sum_nodes / 2)).getpos
-                        is_already_exist = True
+                        e.pos = pos
+                        is_already_exist = False
                         break
                 # if the agent doesn't exist on the coordinate, add
                 if  is_already_exist:
-                    pos = self.graph.getnode(place).getpos()
+                    # pos = self.graph.getnode(place).getpos()
                     agent = Agent(agen['id'], agen['value'], agen['src'], agen['dest'], agen['speed'],pos)
-
                     self.Agens.append(agent)
-                place = place + pos_ag
+                # place = place + pos_ag
             return True
         except:
             return False
@@ -101,7 +100,7 @@ class main():
                 z = 0.0
                 pos = (x, y, z)
                 node_src,nodes_dest = self.location_pokemon(pos)
-                pokemon = Pokémon((x,y,z),pok['value'], pok['type'],False, node_src)
+                pokemon = Pokémon(pok['value'], pok['type'],(x,y,z), node_src.getKey())
                 self.pokemons.append(pokemon)
             return True
         except:
@@ -117,16 +116,16 @@ class main():
                 temp_src = n["pos"]
                 temp = self.graph.getnode(e)
                 temp_dest = temp.getpos()
-                Incline = (temp_src[1] - temp_dest[1]) / (temp_src[0] - temp_dest[0])
-                variable = temp_src[1] - (temp_src[0] * Incline)
-                if pos[1] == Incline * pos[0] + variable:
+                slope = (temp_src[1] - temp_dest[1]) / (temp_src[0] - temp_dest[0])
+                variable = temp_src[1] - (temp_src[0] * slope)
+                if pos[1] == slope * pos[0] + variable:
                     # n -> src , e -> dest
                     node = self.graph.getnode(n["id"])
                     node2 = self.graph.getnode(e)
                     return node, node2
 
     # finds the shortest path from one node to another
-    def shortest_path(self, id1: Node, id2: Node) -> (float, list):
+    def shortest_path(self, id1: int, id2: int) -> (float, list):
         ans = []
         ans_dist = self.shortest_path_dist(id1, id2)
         if ans_dist == -1:
@@ -155,7 +154,7 @@ class main():
         self.reset()
         ans = self.Dijkstra(self.graph.get_all_v().get(src), self.graph.get_all_v().get(dest))
         self.reset()
-        if ans == 1000000:
+        if ans == float('inf'):
             return -1
         return ans
 

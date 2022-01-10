@@ -24,3 +24,6 @@ class Edge:
 
     def getweight(self):
         return self.weight
+
+    def getweight(self):
+        return self.weight
