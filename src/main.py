@@ -50,40 +50,13 @@ class main():
     # load agents to the game from the json file
     def load_agents(self, file_name) -> bool:
         try:
-            # sum_nodes = len(self.graph.get_list_nodes())
             date = json.loads(file_name)
             AgentList = date['Agents']
-            # pos_ag = round(sum_nodes / len(AgentList))-1
-            # if pos_ag == sum_nodes-1:
-            #     pos_ag = pos_ag/2
             for ag in AgentList:
-                # place = pos_ag
-                # agen represents agent
                 agen = ag['Agent']
-            #     temp_pos = agen['pos'].split(",")
-            #     x = float(temp_pos[0])
-            #     y = float(temp_pos[1])
-            #     z = 0.0
-            #     pos = (x, y, z)
-            #     is_already_exist = True
-            #     # loop all the agents who are already exist
-            #     for e in self.Agens:
-            #         # if the agent is already exist we need to replace it's value
-            #         if e.id == agen['id']:
-            #             e.value = agen['value']
-            #             e.src = agen['src']
-            #             e.dest = agen['dest']
-            #             e.speed = agen['speed']
-            #             e.pos = self.graph.getnode((int)(sum_nodes / 2)).getpos
-            #             is_already_exist = True
-            #             break
-            #     # if the agent doesn't exist on the coordinate, add
-            #     if  is_already_exist:
                 pos = agen['pos'].split(",")
                 agent = Agent(agen['id'], agen['value'], agen['src'], agen['dest'], agen['speed'],pos)
-
                 self.Agens.append(agent)
-                # place = place + pos_ag
             return True
         except:
             return False
@@ -95,16 +68,12 @@ class main():
             PokemonsList = date['Pokemons']
             self.pokemons.clear()
             for p in PokemonsList:
-                print(len(PokemonsList))
                 pok = p['Pokemon']
-                print(pok)
                 tempos = pok['pos'].split(",")
-                print(tempos)
                 x = float(tempos[0])
                 y = float(tempos[1])
                 z = 0.0
                 pos = (x, y, z)
-                print(pos)
                 node_src,nodes_dest = self.location_pokemon(pos)
                 pokemon = Pokémon((x,y,z), pok['value'], pok['type'],False, node_src.getKey(), nodes_dest.getKey())
                 self.pokemons.append(pokemon)
@@ -126,7 +95,6 @@ class main():
                 variable = temp_src[1] - (temp_src[0] * Incline)
                 if Incline * pos[0] + variable - pos[1] <= 0.0001 and Incline * pos[0] + variable - pos[1] >= -0.0001 :
                     # n -> src , e -> dest_y
-                    print(Incline * pos[0] + variable - pos[1])
                     node = self.graph.getnode(n["id"])
                     node2 = self.graph.getnode(e)
                     return node, node2

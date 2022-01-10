@@ -104,52 +104,11 @@ def my_scale(data, x=False, y=False):
 
 radius = 15
 
-# add agents
-# for i in range(play.numOfAgent):
-#     st = "{id:"
-#     st += str(i)
-#     st += "}"
-#     client.add_agent(st)
-
-
 # this command starts the server - the game is running now
 client.start()
 
 
-# # allocates for each pokemon the closest agent
-# def AllocateAgent():
-#     for agent in play.ListAgens():
-#         if agent.src == agent.lestdest or len(agent.orderList) == 0:
-#             v = -10000000000
-#             bestPok = Pokémon((0.0, 0.0, 0.0),0, 0, False,0)
-#             pokemons_list = play.ListPokemons()
-#             for pok in pokemons_list:
-#                 if pok.wasTaken:
-#                     srcPok, destPok = play.location_pokemon(pok.pos)
-#
-#                     agent.lestdest = destPok.getKey()
-#                     if agent.src == srcPok.getKey():
-#                         w, lst = play.shortest_path(srcPok, destPok)
-#                     elif agent.src == destPok.getKey():
-#                         lst = [srcPok.getKey(), destPok.getKey()]
-#                         bestPok = pok
-#                         agent.orderList = lst
-#                         break
-#                     else:
-#                         temp_node =play.graph.getnode(agent.src)
-#                         w, lst = play.threeShortestPath(temp_node, srcPok, destPok)
-#
-#                     lst.pop(0)
-#                     if (pok.value - w) > v:
-#                         v = pok.value - w
-#                         bestPok = pok
-#                         agent.orderList = lst
-#
-#             bestPok.wasTaken = True
-
-def AllocateAgent222():
-    # play.load_agents(client.get_agents())
-    # play.load_pokemon(client.get_pokemons())
+def AllocateAgent():
     for agent in play.ListAgens():
         # if agent.dest == -1:
         min_dist: float = math.inf
@@ -172,9 +131,6 @@ def AllocateAgent222():
             agent.src = dest
             client.choose_next_edge(
                 '{"agent_id":' + str(agent.ID) + ', "next_node_id":' + str(dest) + '}')
-            # print("id:" + str(agent.ID))
-            # print("src:" + str(agent.src))
-            # print("src:" + str(agent.dest))
 
 
 # draw nodes
@@ -269,7 +225,7 @@ def load_agent():
         y = my_scale(float(y), y=True)
         a.pos = (x, y, 0.0)
 
-
+counter = 0
 def move_the_agent():
     inf = json.loads(client.get_info(), object_hook=lambda d: SimpleNamespace(**d)).GameServer
     flag = True
@@ -277,15 +233,11 @@ def move_the_agent():
         if agent.dest == -1:
             flag = False
             nextNode = agent.orderList.pop(0)
-            # print("next: ", nextNode)
-            # print("agent: ", agent.ID)
-            client.choose_next_edge('{"agent_id":' + str(agent.ID) + ', "next_node_id":' + str(nextNode) + '}')
-            # ttl = client.time_to_end()
-            # print(ttl, client.get_info())
 
-    # if inf.moves / (time.time() - timer) < 10 and flag:
-    #     client.move()
+            client.choose_next_edge('{"agent_id":' + str(agent.ID) + ', "next_node_id":' + str(nextNode) + '}')
+
 while client.is_running() == 'true':
+    load_pokemons()
     # counts the agent moves
     # split the getInfo (string) and take the third element (moves)
     agent_mc = client.get_info().split(',')
@@ -295,10 +247,11 @@ while client.is_running() == 'true':
     timer_button = Button(x=35, y=20 + 30 + 30, height=20, width=80,
                           text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
     # load agents and pokemons
-    load_pokemons()
+
 
     load_agent()
     check_events()
+    AllocateAgent()
 
     top_left_screen = (0, 0)
     # refresh surface
@@ -317,9 +270,8 @@ while client.is_running() == 'true':
     display.update()
     # refresh rate
     clock.tick(60)
-    AllocateAgent222()
     client.move()
-    play.pokemons.clear()
+    # play.pokemons.clear()
     print(client.get_info())
      #move_the_agent()
     time.sleep(0.1)
