@@ -13,12 +13,13 @@ from pygame import *
 import time
 from src.GUI.Button import Button
 from src.main import main
+import math
 from src.players.Agent import Agent
 from src.players.Pokémon import Pokémon
 from src.graph.DiGraph import DiGraph
 
 # init pygame
-WIDTH, HEIGHT = 1080, 720
+WIDTH, HEIGHT = 800, 600
 
 # default port
 PORT = 6666
@@ -50,6 +51,11 @@ timer = time.time()
 client = Client()
 client.start_connection(HOST, PORT)
 play = main(client.get_info())
+
+client.add_agent("{\"id\":" + str(1) + "}")
+client.add_agent("{\"id\":" + str(2) + "}")
+client.add_agent("{\"id\":" + str(3) + "}")
+client.add_agent("{\"id\":" + str(4) + "}")
 
 # graph = play.graph
 
@@ -99,45 +105,76 @@ def my_scale(data, x=False, y=False):
 radius = 15
 
 # add agents
-for i in range(play.numOfAgent):
-    st = "{id:"
-    st += str(i)
-    st += "}"
-    client.add_agent(st)
+# for i in range(play.numOfAgent):
+#     st = "{id:"
+#     st += str(i)
+#     st += "}"
+#     client.add_agent(st)
+
 
 # this command starts the server - the game is running now
 client.start()
 
 
-# allocates for each pokemon the closest agent
-def AllocateAgent():
+# # allocates for each pokemon the closest agent
+# def AllocateAgent():
+#     for agent in play.ListAgens():
+#         if agent.src == agent.lestdest or len(agent.orderList) == 0:
+#             v = -10000000000
+#             bestPok = Pokémon((0.0, 0.0, 0.0),0, 0, False,0)
+#             pokemons_list = play.ListPokemons()
+#             for pok in pokemons_list:
+#                 if pok.wasTaken:
+#                     srcPok, destPok = play.location_pokemon(pok.pos)
+#
+#                     agent.lestdest = destPok.getKey()
+#                     if agent.src == srcPok.getKey():
+#                         w, lst = play.shortest_path(srcPok, destPok)
+#                     elif agent.src == destPok.getKey():
+#                         lst = [srcPok.getKey(), destPok.getKey()]
+#                         bestPok = pok
+#                         agent.orderList = lst
+#                         break
+#                     else:
+#                         temp_node =play.graph.getnode(agent.src)
+#                         w, lst = play.threeShortestPath(temp_node, srcPok, destPok)
+#
+#                     lst.pop(0)
+#                     if (pok.value - w) > v:
+#                         v = pok.value - w
+#                         bestPok = pok
+#                         agent.orderList = lst
+#
+#             bestPok.wasTaken = True
+
+def AllocateAgent222():
+    # play.load_agents(client.get_agents())
+    # play.load_pokemon(client.get_pokemons())
     for agent in play.ListAgens():
-        if agent.src == agent.lestdest or len(agent.whereTo) == 0:
-            v = float("-inf")
-            bestPok = Pokémon( 0, 0,(0.0, 0.0, 0.0), 0)
-            pokemons_list = play.ListPokemons()
-            for pok in pokemons_list:
-                if not pok.wasTaken:
-                    srcPok, destPok = play.location_pokemon(pok.pos)
-                    agent.lestdest = destPok.getKey()
-                    if agent.src == srcPok.getKey():
-                        w, lst = play.shortest_path(srcPok, destPok)
-                    elif agent.src == destPok.getKey():
-                        lst = [srcPok.getKey(), destPok.getKey()]
-                        bestPok = pok
-                        agent.whereTo = lst
-                        break
-                    else:
-                        temp_node = play.graph.getnode(agent.src)
-                        w, lst = play.threeShortestPath(temp_node, srcPok, destPok)
+        # if agent.dest == -1:
+        min_dist: float = math.inf
+        dest: int = agent.src
+        pokemon: Pokémon = Pokémon((-1, -1), -1, -1, False, -1, -1)
 
-                    lst.pop(0)
-                    if (pok.value - w) > v:
-                        v = pok.value - w
-                        bestPok = pok
-                        agent.whereTo = lst
-
-            bestPok.wasTaken = True
+        pokemons_list = play.ListPokemons()
+        for pok in pokemons_list:
+            srcPok, destPok = play.location_pokemon(pok.pos)
+            temp_dist, path = play.shortest_path(agent.src, srcPok.getKey())
+            temp_dist = temp_dist / agent.speed
+            if temp_dist < min_dist:
+                pokemon = pok
+                min_dist = temp_dist
+                if min_dist == 0:
+                    dest = pok.destnode
+                else:
+                    dest = path[1]
+        if dest != -1:
+            agent.src = dest
+            client.choose_next_edge(
+                '{"agent_id":' + str(agent.ID) + ', "next_node_id":' + str(dest) + '}')
+            # print("id:" + str(agent.ID))
+            # print("src:" + str(agent.src))
+            # print("src:" + str(agent.dest))
 
 
 # draw nodes
@@ -239,15 +276,15 @@ def move_the_agent():
     for agent in play.ListAgens():
         if agent.dest == -1:
             flag = False
-            nextNode = agent.whereTo.pop(0)
-            print("next: ", nextNode)
-            print("agent: ", agent.ID)
+            nextNode = agent.orderList.pop(0)
+            # print("next: ", nextNode)
+            # print("agent: ", agent.ID)
             client.choose_next_edge('{"agent_id":' + str(agent.ID) + ', "next_node_id":' + str(nextNode) + '}')
-            ttl = client.time_to_end()
-            print(ttl, client.get_info())
+            # ttl = client.time_to_end()
+            # print(ttl, client.get_info())
 
-    if inf.moves / (time.time() - timer) < 10 and flag:
-        client.move()
+    # if inf.moves / (time.time() - timer) < 10 and flag:
+    #     client.move()
 
 
 while client.is_running() == 'true':
@@ -263,6 +300,7 @@ while client.is_running() == 'true':
     load_pokemons()
     load_agent()
     check_events()
+
     top_left_screen = (0, 0)
     # refresh surface
     temp_screen.fill((0, 0, 0))
@@ -274,15 +312,18 @@ while client.is_running() == 'true':
     # draw game
     draw_edges()
     draw_vertices()
-
     draw_agents()
     draw_pokemons()
     # update screen changes
     display.update()
     # refresh rate
     clock.tick(60)
-    AllocateAgent()
-    move_the_agent()
+    AllocateAgent222()
+    client.move()
+    play.pokemons.clear()
+    print(client.get_info())
+     #move_the_agent()
+    time.sleep(0.1)
 
 client.stop_connection()
 # done-> Game Over!
