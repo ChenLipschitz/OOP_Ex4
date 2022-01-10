@@ -93,6 +93,7 @@ class main():
         try:
             date = json.loads(file_name)
             PokemonsList = date['Pokemons']
+            self.pokemons.clear()
             for p in PokemonsList:
                 pok = p['Pokemon']
                 tempos = pok['pos'].split(",")
