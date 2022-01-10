@@ -95,14 +95,18 @@ class main():
             PokemonsList = date['Pokemons']
             self.pokemons.clear()
             for p in PokemonsList:
+                print(len(PokemonsList))
                 pok = p['Pokemon']
+                print(pok)
                 tempos = pok['pos'].split(",")
+                print(tempos)
                 x = float(tempos[0])
                 y = float(tempos[1])
                 z = 0.0
                 pos = (x, y, z)
+                print(pos)
                 node_src,nodes_dest = self.location_pokemon(pos)
-                pokemon = Pokémon((x,y,z),pok['value'], pok['type'],False, node_src.getKey(), nodes_dest.getKey())
+                pokemon = Pokémon((x,y,z), pok['value'], pok['type'],False, node_src.getKey(), nodes_dest.getKey())
                 self.pokemons.append(pokemon)
             return True
         except:
@@ -120,8 +124,9 @@ class main():
                 temp_dest = temp.getpos()
                 Incline = (temp_src[1] - temp_dest[1]) / (temp_src[0] - temp_dest[0])
                 variable = temp_src[1] - (temp_src[0] * Incline)
-                if pos[1] == Incline * pos[0] + variable:
-                    # n -> src , e -> dest
+                if Incline * pos[0] + variable - pos[1] <= 0.0001 and Incline * pos[0] + variable - pos[1] >= -0.0001 :
+                    # n -> src , e -> dest_y
+                    print(Incline * pos[0] + variable - pos[1])
                     node = self.graph.getnode(n["id"])
                     node2 = self.graph.getnode(e)
                     return node, node2

@@ -285,8 +285,6 @@ def move_the_agent():
 
     # if inf.moves / (time.time() - timer) < 10 and flag:
     #     client.move()
-
-
 while client.is_running() == 'true':
     # counts the agent moves
     # split the getInfo (string) and take the third element (moves)
@@ -298,6 +296,7 @@ while client.is_running() == 'true':
                           text="Time To End: " + str(int(float(client.time_to_end()) / 1000)))
     # load agents and pokemons
     load_pokemons()
+
     load_agent()
     check_events()
 
