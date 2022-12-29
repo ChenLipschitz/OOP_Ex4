@@ -23,7 +23,7 @@ The pokémons are located on the graph’s (directed) edges, therefore, the agen
 
 ## How To Run:
 Download the project.
-Open the projectm, in the terminal command write the following line:
+Open the project, in the terminal command write the following line:
 
 java -jar Ex4_Server_v0.0.jar 2
 
